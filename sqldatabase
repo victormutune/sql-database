@@ -1,1 +1,153 @@
 
+-- Create the database
+CREATE DATABASE IF NOT EXISTS BookStoreDB;
+USE BookStoreDB;
+
+-- Create country table
+CREATE TABLE country (
+    country_id INT AUTO_INCREMENT PRIMARY KEY,
+    country_name VARCHAR(100) NOT NULL
+);
+
+-- Create address table
+CREATE TABLE address (
+    address_id INT AUTO_INCREMENT PRIMARY KEY,
+    street VARCHAR(255),
+    city VARCHAR(100),
+    zip_code VARCHAR(20),
+    country_id INT,
+    FOREIGN KEY (country_id) REFERENCES country(country_id)
+);
+
+-- Create address status table
+CREATE TABLE address_status (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_description VARCHAR(50)
+);
+
+-- Create customer table
+CREATE TABLE customer (
+    customer_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(150)
+);
+
+-- Create customer address table
+CREATE TABLE customer_address (
+    customer_id INT,
+    address_id INT,
+    status_id INT,
+    PRIMARY KEY (customer_id, address_id),
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (address_id) REFERENCES address(address_id),
+    FOREIGN KEY (status_id) REFERENCES address_status(status_id)
+);
+
+-- Create publisher table
+CREATE TABLE publisher (
+    publisher_id INT AUTO_INCREMENT PRIMARY KEY,
+    publisher_name VARCHAR(100),
+    publisher_address VARCHAR(255)
+);
+
+-- Create book language table
+CREATE TABLE book_language (
+    language_id INT AUTO_INCREMENT PRIMARY KEY,
+    language_name VARCHAR(50)
+);
+
+-- Create author table
+CREATE TABLE author (
+    author_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100)
+);
+
+-- Create book table
+CREATE TABLE book (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(200),
+    isbn VARCHAR(20),
+    price DECIMAL(8, 2),
+    publisher_id INT,
+    language_id INT,
+    FOREIGN KEY (publisher_id) REFERENCES publisher(publisher_id),
+    FOREIGN KEY (language_id) REFERENCES book_language(language_id)
+);
+
+-- Create book-author table
+CREATE TABLE book_author (
+    book_id INT,
+    author_id INT,
+    PRIMARY KEY (book_id, author_id),
+    FOREIGN KEY (book_id) REFERENCES book(book_id),
+    FOREIGN KEY (author_id) REFERENCES author(author_id)
+);
+
+-- Create order status table
+CREATE TABLE order_status (
+    status_id INT AUTO_INCREMENT PRIMARY KEY,
+    status_description VARCHAR(50)
+);
+
+-- Create shipping method table
+CREATE TABLE shipping_method (
+    method_id INT AUTO_INCREMENT PRIMARY KEY,
+    method_name VARCHAR(100),
+    cost DECIMAL(6, 2)
+);
+
+-- Create customer order table
+CREATE TABLE cust_order (
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT,
+    order_date DATE,
+    status_id INT,
+    method_id INT,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (status_id) REFERENCES order_status(status_id),
+    FOREIGN KEY (method_id) REFERENCES shipping_method(method_id)
+);
+
+-- Create order line table
+CREATE TABLE order_line (
+    order_line_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    book_id INT,
+    quantity INT,
+    FOREIGN KEY (order_id) REFERENCES cust_order(order_id),
+    FOREIGN KEY (book_id) REFERENCES book(book_id)
+);
+
+-- Create order history table
+CREATE TABLE order_history (
+    history_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT,
+    status_id INT,
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES cust_order(order_id),
+    FOREIGN KEY (status_id) REFERENCES order_status(status_id)
+);
+
+-- Insert sample data
+INSERT INTO country (country_name) VALUES ('Kenya'), ('USA');
+INSERT INTO address_status (status_description) VALUES ('current'), ('old');
+INSERT INTO customer (first_name, last_name, email) VALUES ('John', 'Doe', 'john@example.com');
+INSERT INTO address (street, city, zip_code, country_id) VALUES ('123 Main St', 'Nairobi', '00100', 1);
+INSERT INTO customer_address (customer_id, address_id, status_id) VALUES (1, 1, 1);
+INSERT INTO publisher (publisher_name, publisher_address) VALUES ('Tech Books', '456 Market St');
+INSERT INTO book_language (language_name) VALUES ('English');
+INSERT INTO author (first_name, last_name) VALUES ('Jane', 'Austen');
+INSERT INTO book (title, isbn, price, publisher_id, language_id) VALUES ('Pride and Prejudice', '1234567890', 19.99, 1, 1);
+INSERT INTO book_author (book_id, author_id) VALUES (1, 1);
+INSERT INTO order_status (status_description) VALUES ('pending'), ('shipped'), ('delivered'), ('cancelled');
+INSERT INTO shipping_method (method_name, cost) VALUES ('Standard', 5.00), ('Express', 10.00);
+INSERT INTO cust_order (customer_id, order_date, status_id, method_id) VALUES (1, CURDATE(), 1, 1);
+INSERT INTO order_line (order_id, book_id, quantity) VALUES (1, 1, 2);
+INSERT INTO order_history (order_id, status_id) VALUES (1, 1);
+
+-- Create user and grant permissions
+CREATE USER IF NOT EXISTS 'bookstore_user'@'localhost' IDENTIFIED BY 'password123';
+GRANT SELECT, INSERT, UPDATE, DELETE ON BookStoreDB.* TO 'bookstore_user'@'localhost';
+FLUSH PRIVILEGES;
